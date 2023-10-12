@@ -1,12 +1,12 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const path = require('path');
-const { Server } = require('socket.io');
-const authSocket = require('./middleware/authSocket');
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const path = require("path");
+const { Server } = require("socket.io");
+const authSocket = require("./middleware/authSocket");
 
 //routes
-const Routes = require('./routes/route');
+const Routes = require("./routes/route");
 
 const app = express();
 
@@ -19,23 +19,23 @@ app.use(cors());
 //membuat koneksi dengan database mongodb, lebih jelasnya yaitu database runding_database
 mongoose
   .connect(
-    `mongodb+srv://pokemongo090103:gUHPvXgutAyGhNp2@circlearn.nwrdsvw.mongodb.net/`,
+    `mongodb+srv://grifff:griffinjr020203@cluster0.covjrne.mongodb.net/?retryWrites=true&w=majority`,
     {
       useNewUrlParser: true,
-      useUnifiedTopology: true
+      useUnifiedTopology: true,
     }
   )
   .then(() => {
-    console.log('Successfully connect to MongoDB.');
+    console.log("Successfully connect to MongoDB.");
   })
   .catch((err) => {
-    console.error('Connection error', err);
+    console.error("Connection error", err);
     process.exit();
   });
 
 //route middleware
-app.use('/', Routes);
-app.use('/images', express.static(path.join('src/images')));
+app.use("/", Routes);
+app.use("/images", express.static(path.join("src/images")));
 
 //menjalankan server pada port 8080
 const PORT = process.env.PORT || 8080;
@@ -45,7 +45,7 @@ const server = app.listen(PORT, () => {
 
 //sockets for live chat
 const io = new Server(server, {
-  cors: { origin: '*' }
+  cors: { origin: "*" },
 });
 
 io.use(async (socket, next) => {
@@ -54,20 +54,20 @@ io.use(async (socket, next) => {
     next();
   } else {
     socket.disconnect();
-    console.log('user disconnected');
-    next(new Error('invalid'));
+    console.log("user disconnected");
+    next(new Error("invalid"));
   }
 });
 
-io.on('connection', (socket) => {
-  console.log('a user connected : ', socket.id);
-  socket.on('chat_message', (msg) => {
-    console.log('message: ' + msg);
-    io.emit('chat_message', msg);
+io.on("connection", (socket) => {
+  console.log("a user connected : ", socket.id);
+  socket.on("chat_message", (msg) => {
+    console.log("message: " + msg);
+    io.emit("chat_message", msg);
   });
-  socket.on('disconnect', () => {
-    console.log('user disconnected : ', socket.id);
+  socket.on("disconnect", () => {
+    console.log("user disconnected : ", socket.id);
   });
 });
 
-app.set('socketio', io);
+app.set("socketio", io);
