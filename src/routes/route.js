@@ -21,6 +21,7 @@ const Runding = require('../model/runding');
 const Posts = require('../model/posts');
 const Comment = require('../model/comment');
 const Replies = require('../model/replies');
+const Topics = require('../model/topic');
 
 function selectFewerFields(dataObject) {
   const { _id, logo_grup, subject, jenisRunding, peserta, admin_username } =
@@ -976,6 +977,148 @@ router.delete('/comments/reply/:replyId', auth, async (req, res) => {
       message: 'You are not author of reply',
       author: false
     });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
+router.get('/topics', async (req, res) => {
+  try {
+    const dataTopics = await Topics.find({});
+    res.json({ status: 'ok', data: dataTopics });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
+router.post('/topics/create', async (req, res) => {
+  try {
+    const { topicName } = req.body;
+
+    // Check if the topic with the same name already exists
+    const existingTopic = await Topics.findOne({ topicName });
+
+    if (existingTopic) {
+      res.status(409).json({
+        status: 'error',
+        message: 'Topic already exists',
+        data: existingTopic
+      });
+    } else {
+      // Create the topic if it doesn't exist
+      const newTopic = await Topics.create({
+        topicId: mongoose.Types.ObjectId(),
+        topicName: topicName
+      });
+      res.status(201).json({
+        status: 'ok',
+        message: 'New topic created',
+        data: newTopic
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error });
+  }
+});
+
+router.delete('/topics/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Topics.deleteOne({ topicId: id });
+    res.json({ status: 'ok', message: 'topic deleted' });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
+router.get('/admin/users', async (req, res) => {
+  try {
+    const userData = await User.find({});
+    res.json({ status: 'ok', data: userData });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
+// get user by id
+router.get('/admin/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await User.findOne({ _id: id });
+    res.json({ status: 'ok', message: 'user found' });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
+router.delete('/admin/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await User.deleteOne({ _id: id });
+    res.json({ status: 'ok', message: 'user deleted' });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
+router.get('/admin/runding', async (req, res) => {
+  try {
+    const dataRunding = await Runding.find({});
+    res.json({ status: 'ok', data: dataRunding });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
+// delete runding by id admin
+router.delete('/admin/runding/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Runding.deleteOne({ _id: id });
+    res.json({ status: 'ok', message: 'runding deleted' });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
+// get all user by id inside runding peserta
+router.get('/admin/runding/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const dataRunding = await Runding.findOne({ _id: id });
+    const dataPeserta = await User.find({ _id: dataRunding.peserta });
+    res.json({ status: 'ok', data: dataPeserta });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
+// remove user from runding peserta
+router.delete('/admin/runding/:id/:userid', async (req, res) => {
+  try {
+    const { id, userid } = req.params;
+    await Runding.updateOne(
+      { _id: mongoose.Types.ObjectId(id) },
+      {
+        $pull: { peserta: userid }
+      }
+    );
+    await User.updateOne(
+      { _id: mongoose.Types.ObjectId(userid) },
+      {
+        $pull: { peserta: id }
+      }
+    );
+    res.json({ status: 'ok', message: 'user deleted from runding' });
   } catch (error) {
     res.status(500);
     res.json({ status: 'error', message: error });
