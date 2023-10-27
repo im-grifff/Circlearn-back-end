@@ -1125,4 +1125,27 @@ router.delete('/admin/runding/:id/:userid', async (req, res) => {
   }
 });
 
+// join user to runding peserta
+router.put('/admin/join/:roomId/:userId', async (req, res) => {
+  try {
+    const { roomId, userId } = req.params;
+    await Runding.updateOne(
+      { _id: mongoose.Types.ObjectId(roomId) },
+      {
+        $push: { peserta: userId }
+      }
+    );
+    await User.updateOne(
+      { _id: mongoose.Types.ObjectId(userId) },
+      {
+        $push: { peserta: roomId }
+      }
+    );
+    res.json({ status: 'ok', message: 'user join to runding' });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
 module.exports = router;
