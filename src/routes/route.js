@@ -181,6 +181,47 @@ router.post('/user/register', async (req, res) => {
   }
 });
 
+// user edit profile route
+
+router.put('/user/edit', auth, async (req, res) => {
+  try {
+    const { username, email, password: plainTextPassword } = req.body;
+    const user = await User.findOne({ _id: req.userloggedIn.id }).lean();
+
+    if (!user) {
+      res.status(401);
+      return res.json({ status: 'error', message: 'Invalid user' });
+    }
+
+    if (username) {
+      await User.updateOne(
+        { _id: mongoose.Types.ObjectId(req.userloggedIn.id) },
+        { username: username }
+      );
+    }
+
+    if (email) {
+      await User.updateOne(
+        { _id: mongoose.Types.ObjectId(req.userloggedIn.id) },
+        { email: email }
+      );
+    }
+
+    if (plainTextPassword) {
+      const password = await bcrypt.hash(plainTextPassword, 10);
+      await User.updateOne(
+        { _id: mongoose.Types.ObjectId(req.userloggedIn.id) },
+        { password: password }
+      );
+    }
+
+    res.json({ status: 'ok', message: 'user updated' });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
 // Runding Route
 
 router.get('/runding', auth, async (req, res) => {
@@ -1048,8 +1089,8 @@ router.get('/admin/users', async (req, res) => {
 router.get('/admin/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await User.findOne({ _id: id });
-    res.json({ status: 'ok', message: 'user found' });
+    const userData = await User.findOne({ _id: id });
+    res.json({ status: 'ok', message: 'user found', data: userData });
   } catch (error) {
     res.status(500);
     res.json({ status: 'error', message: error });
@@ -1148,4 +1189,25 @@ router.put('/admin/join/:roomId/:userId', async (req, res) => {
   }
 });
 
+router.put('/admin/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, email, password, role } = req.body;
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    await User.updateOne(
+      { _id: mongoose.Types.ObjectId(id) },
+      {
+        username: username,
+        email: email,
+        password: hashedPassword,
+        role: role
+      }
+    );
+    res.json({ status: 'ok', message: 'user updated' });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
 module.exports = router;
