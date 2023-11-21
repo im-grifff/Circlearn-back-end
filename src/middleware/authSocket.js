@@ -1,10 +1,10 @@
-const jwt = require("jsonwebtoken");
-const User = require("../model/user");
+const jwt = require('jsonwebtoken');
+const User = require('../model/user');
 
 /*secret token untuk json web token, hasil token yang di encode dengan base64 akan
 diberikan ke client yang melakukan login*/
 const JWT_SECRET =
-  "$2a$10$YJYHqw1XxugfTGHOWL.GSODjNJlLOfic8MWs5T8jbKxPDMDTvm5Ti";
+  '$2a$10$YJYHqw1XxugfTGHOWL.GSODjNJlLOfic8MWs5T8jbKxPDMDTvm5Ti';
 
 module.exports = async (authToken) => {
   const token = authToken;
@@ -21,11 +21,11 @@ module.exports = async (authToken) => {
       return true;
     }
   } catch (error) {
-    if (error.message === "jwt malformed" || "invalid token") {
-      console.log("Socket user access : token is error");
+    if (error.message === 'jwt malformed' || 'invalid token') {
+      console.log('Socket user access : token is error');
       return false;
     } else {
-      console.log("Socket user access : error");
+      console.log('Socket user access : error');
       return false;
     }
   }

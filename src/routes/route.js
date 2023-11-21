@@ -22,6 +22,7 @@ const Posts = require('../model/posts');
 const Comment = require('../model/comment');
 const Replies = require('../model/replies');
 const Topics = require('../model/topic');
+const TopicRequest = require('../model/topic-request');
 
 function selectFewerFields(dataObject) {
   const { _id, logo_grup, subject, jenisRunding, peserta, admin_username } =
@@ -1210,4 +1211,76 @@ router.put('/admin/users/:id', async (req, res) => {
     res.json({ status: 'error', message: error });
   }
 });
+
+// solved
+router.put('/posts/solved/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { solved } = req.body;
+    await Posts.updateOne(
+      { _id: mongoose.Types.ObjectId(id) },
+      {
+        solved: solved
+      }
+    );
+    res.json({ status: 'ok', message: 'post updated' });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
+// topics request
+router.get('/topics/request', async (req, res) => {
+  try {
+    const dataTopics = await TopicRequest.find({});
+    res.json({ status: 'ok', data: dataTopics });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
+router.post('/topics/request', async (req, res) => {
+  try {
+    const { topicName } = req.body;
+    console.log(req.body);
+
+    // Check if the topic with the same name already exists
+    const existingTopic = await TopicRequest.findOne({ topicName });
+
+    if (existingTopic) {
+      res.status(409).json({
+        status: 'error',
+        message: 'Topic already exists',
+        data: existingTopic
+      });
+    } else {
+      // Create the topic if it doesn't exist
+      const newTopic = await TopicRequest.create({
+        topicId: mongoose.Types.ObjectId(),
+        topicName: topicName
+      });
+      res.status(201).json({
+        status: 'ok',
+        message: 'New topic created',
+        data: newTopic
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error });
+  }
+});
+
+router.delete('/topics/request/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await TopicRequest.deleteOne({ _id: id });
+    res.json({ status: 'ok', message: 'user deleted from runding' });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
 module.exports = router;
