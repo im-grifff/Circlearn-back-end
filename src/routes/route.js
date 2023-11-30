@@ -744,8 +744,48 @@ router.put('/posts/:postid', auth, verifyPost, async (req, res) => {
     res.json({ status: 'error', message: error });
   }
 });
+router.put('/admin/posts/:postid', auth, async (req, res) => {
+  try {
+    const { postid } = req.params;
+    const { title_form, description_form, tags_form } = req.body;
+    const newPost = await Posts.updateOne(
+      {
+        _id: mongoose.Types.ObjectId(postid)
+      },
+      {
+        title: title_form,
+        description: description_form,
+        tags: tags_form
+      }
+    );
+
+    res.json({
+      status: 'ok',
+      message: 'post updated',
+      author: true,
+      data: newPost
+    });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
 
 router.delete('/posts/:postid', auth, verifyPost, async (req, res) => {
+  try {
+    const { postid } = req.params;
+    await Posts.deleteOne({
+      _id: mongoose.Types.ObjectId(postid)
+    });
+
+    res.json({ status: 'ok', message: 'question deleted', author: true });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
+router.delete('/admin/posts/:postid', auth, async (req, res) => {
   try {
     const { postid } = req.params;
     await Posts.deleteOne({
@@ -837,6 +877,43 @@ router.post(
     }
   }
 );
+
+router.post('/admin/posts/comments/create/:postid', auth, async (req, res) => {
+  try {
+    const { postid } = req.params;
+    const { content_form } = req.body;
+
+    // Use lean() to convert the result to a plain JavaScript object
+    const postComment = await Posts.findOne({ _id: postid }).lean();
+
+    const rundingId = postComment.runding_id.toString();
+    const newComment = await Comment.create({
+      post_id: mongoose.Types.ObjectId(postid),
+      runding_id: mongoose.Types.ObjectId(rundingId),
+      content: content_form,
+      author_id: [req.userloggedIn.id],
+      author_username: [req.userloggedIn.username]
+    });
+
+    await Posts.updateOne(
+      { _id: mongoose.Types.ObjectId(postid) },
+      {
+        $push: { replies: newComment._id }
+      }
+    );
+
+    res.status(201);
+    res.json({
+      status: 'ok',
+      message: 'Comment created',
+      member: true,
+      data: newComment
+    });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error.toString() });
+  }
+});
 
 router.put(
   '/comments/like/:commentid',
