@@ -138,6 +138,7 @@ router.post('/user/register', async (req, res) => {
   const { username, email, password: plainTextPassword } = req.body;
   const re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
 
+  // Validation checks
   if (!username || typeof username !== 'string') {
     res.status(400);
     return res.json({ status: 'error', message: 'Invalid username' });
@@ -153,14 +154,33 @@ router.post('/user/register', async (req, res) => {
     return res.json({ status: 'error', message: 'Invalid password' });
   }
 
-  if (plainTextPassword.length < 5) {
+  if (plainTextPassword.length < 6) {
     res.status(400);
     return res.json({
       status: 'error',
-      message: 'Password too small. Should be atleast 6 characters'
+      message: 'Password too small. Should be at least 6 characters'
     });
   }
 
+  // Check if the email or username already exists in the database
+  try {
+    const existingUser = await User.findOne({
+      $or: [{ email }, { username }]
+    });
+
+    if (existingUser) {
+      res.status(400);
+      return res.json({
+        status: 'error',
+        message: 'Email or username already in use'
+      });
+    }
+  } catch (error) {
+    res.status(500);
+    return res.json({ status: 'error', message: error });
+  }
+
+  // Continue with user creation if email and username are not duplicates
   const password = await bcrypt.hash(plainTextPassword, 10);
 
   try {
@@ -171,11 +191,14 @@ router.post('/user/register', async (req, res) => {
     });
     console.log('User created successfully: ', response);
     res.status(201);
-    res.json({ status: 'ok', message: 'user created' });
+    res.json({ status: 'ok', message: 'User created' });
   } catch (error) {
     if (error.code === 11000) {
       res.status(400);
-      return res.json({ status: 'error', message: 'Username already in use' });
+      return res.json({
+        status: 'error',
+        message: 'Email or username already in use'
+      });
     }
     res.status(500);
     res.json({ status: 'error', message: error });
@@ -781,7 +804,10 @@ router.post(
     try {
       const { postid } = req.params;
       const { content_form } = req.body;
+
+      // Use lean() to convert the result to a plain JavaScript object
       const postComment = await Posts.findOne({ _id: postid }).lean();
+
       const rundingId = postComment.runding_id.toString();
       const newComment = await Comment.create({
         post_id: mongoose.Types.ObjectId(postid),
@@ -807,7 +833,7 @@ router.post(
       });
     } catch (error) {
       res.status(500);
-      res.json({ status: 'error', message: error });
+      res.json({ status: 'error', message: error.toString() });
     }
   }
 );

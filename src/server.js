@@ -19,8 +19,8 @@ app.use(cors());
 //membuat koneksi dengan database mongodb, lebih jelasnya yaitu database runding_database
 mongoose
   .connect(
-    'mongodb+srv://grifff:griffinjr020203@cluster0.covjrne.mongodb.net/',
-    // 'mongodb+srv://pokemongo090103:gUHPvXgutAyGhNp2@circlearn.nwrdsvw.mongodb.net/',
+    // 'mongodb+srv://grifff:griffinjr020203@cluster0.covjrne.mongodb.net/',
+    'mongodb+srv://pokemongo090103:gUHPvXgutAyGhNp2@circlearn.nwrdsvw.mongodb.net/',
     {
       useNewUrlParser: true,
       useUnifiedTopology: true
