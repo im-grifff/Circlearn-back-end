@@ -975,6 +975,18 @@ router.delete(
   }
 );
 
+router.delete('/admin/comments/:commentid', auth, async (req, res) => {
+  try {
+    const { commentid } = req.params;
+    await Comment.deleteOne({ _id: mongoose.Types.ObjectId(commentid) });
+
+    res.json({ status: 'ok', message: 'Comment Deleted', author: true });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
+
 router.put(
   '/comments/:commentid',
   auth,
@@ -996,6 +1008,23 @@ router.put(
     }
   }
 );
+
+router.put('/admin/comments/:commentid', auth, async (req, res) => {
+  try {
+    const { commentid } = req.params;
+    const { content_form } = req.body;
+
+    await Comment.updateOne(
+      { _id: mongoose.Types.ObjectId(commentid) },
+      { content: content_form }
+    );
+
+    res.json({ status: 'ok', message: 'Comment Edited', author: true });
+  } catch (error) {
+    res.status(500);
+    res.json({ status: 'error', message: error });
+  }
+});
 
 // Replies Route
 
